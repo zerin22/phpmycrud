@@ -5,15 +5,67 @@
       $title = $_POST['post_title'];
       $description = $_POST['post_description'];
 
-      $sql = "INSERT INTO posts (`title`, `description`) VALUES ('$title', '$description')";
+      // echo "<pre>";
+      //   print_r($_FILES['post_image']);
+      // echo "</pre>";
+      // exit();
+
+      //UPLOADING FILE TO SERVER
+      if(isset($_FILES["post_image"]) && $_FILES["post_image"]["error"] == 0){
+        $allowed = array(
+                  "jpg" => "image/jpg", 
+                  "jpeg" => "image/jpeg",
+                  "gif" => "image/gif", 
+                  "png" => "image/png"
+         );
+        
+        $filename = $_FILES["post_image"]["name"];
+        $filetype = $_FILES["post_image"]["type"];//image extension checking
+        $filesize = $_FILES["post_image"]["size"];
+
+        //VALIDATE FILE EXTENSION
+        $ext = pathinfo($filename, PATHINFO_EXTENSION);//JPG/JPEG/GIF/PNG
+        if(!array_key_exists($ext, $allowed)) die("Error: Please select a valid file format.");
+         
+        // //VALIDATE FILE SIZE -700KB MAXIMUM
+        // $maxsize = 10 * 1024 * 1024;
+        // if($filesize > $maxsize) die("Error: File size is larger than the allowed limit.");
+         
+        
+        if(in_array($filetype, $allowed)){
+          //Check wheather directory is exists
+          $dir = "asset/img/";
+          if (!file_exists($dir)) {
+            mkdir($dir, 0777, true);
+          }
+          //Generating unique filename
+          $filename = str_shuffle(time()).'.'.$ext; 
+        }else{
+          echo "Error: There was a problem uploading your file. Please try again."; 
+        }
+        
+      }else{
+        echo "Error: " . $_FILES["post_image"]["error"];
+      }
+      
+      $sql = "INSERT INTO `posts` (`title`, `description`, `image`)
+               VALUES ('$title', '$description', '$filename')";
 
       if($conn->query($sql) === TRUE){
+
+        //uploading file to server if post quiery is success
+        if(file_exists($dir . $filename)){
+          echo $filename . " is already exists.";
+        }else{
+          move_uploaded_file($_FILES["post_image"]["tmp_name"], $dir . $filename);
+        }
         header("location:index.php");
       }else{
         echo "Error:" .$conn->error;
       }
+    }
 
-  }
+  
 ?>
 
 <!doctype html>
@@ -36,16 +88,22 @@
             <a href="index.php" class="d-block">All Posts</a>
           </div>
           
-          <form action="create.php" method="POST" class="mt-5">
+          <form action="create.php" method="POST" class="mt-5" enctype="multipart/form-data">
               <div class="col-12 mb-3">
                   <label for="postTitle" class="form-label">Post Title</label>
                   <input id="postTitle" class="form-control" type="text" name="post_title" placeholder="Post Title" required >
               </div>
 
               <div class="col-12 mb-3">
+                <label for="postImage" class="form-label">Post Image</label>
+                <input id="postImage" class="form-control" type="file" name="post_image" placeholder="Post Image" required >
+              </div>
+
+              <div class="col-12 mb-3">
                 <label for="postdescription" class="form-label">Description</label>
                 <textarea id="postdescription" class="form-control" name="post_description" cols="30" rows="5" placeholder="Post Description"></textarea>
               </div>
+
 
               <div class="col-12">
                 <button type="submit" name="create_post" class="btn btn-primary float-end" value="POST">Submit</button>

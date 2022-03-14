@@ -43,7 +43,7 @@
                     if($res->num_rows > 0){
                         $data = $res->fetch_assoc();
             ?>
-                    <img src="asset/img/post.jpg" alt="" class="img-fluid">
+                    <img src="asset/img/<?php echo $data['image']; ?>" alt="" class="img-fluid">
                     <hr>
                     <div>
                         <h6 class="text-center">
